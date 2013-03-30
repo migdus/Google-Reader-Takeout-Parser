@@ -31,6 +31,7 @@ class parser:
         self.widget_dict = {}
         self.MAIN_CSV_WIDGET_KEY = 'main_csv'
         self.CSV_FIRST_LINE_HEADER_KEY = 'header_csv'
+        self.DONE_LABEL_KEY = 'done_label'
     
         master.title('Quick n\' Dirty Google Reader Takeout Parser')
         frame = Tkinter.Frame(master)
@@ -59,7 +60,7 @@ class parser:
                                                                                                         find_dir_entry_content))
         self.destination_button.grid(row=2, column=0)
         
-        self.dest_field = Tkinter.Entry(frame, textvariable=lambda:self.path_dict[self.FIND_DEST_DICT_KEY])
+        self.dest_field = Tkinter.Entry(frame, textvariable=find_dir_entry_content)
         self.dest_field.config(state=Tkinter.DISABLED)
         self.dest_field.grid(row=2, column=1)
         
@@ -69,6 +70,11 @@ class parser:
         self.checkbox_csv_first_line_header.grid(row=4, column=0)
         self.widget_dict[self.CSV_FIRST_LINE_HEADER_KEY] = self.checkbox_csv_first_line_header
         
+        self.ok_label = Tkinter.Label(frame, text="Done!")
+        self.ok_label.configure(state='disabled')
+        self.ok_label.grid(row=4, column=1)
+        self.widget_dict[self.DONE_LABEL_KEY] = self.ok_label
+    
         csv_checked = Tkinter.IntVar()
         self.checkbox_csv = Tkinter.Checkbutton(frame, text="CSV", variable=csv_checked,
                                                 command=lambda:self.csv_checkbox_state(
@@ -127,6 +133,8 @@ class parser:
                                     else:
                                         row.append(e[k])
                                 csv_writer.writerow(row)
+                                
+        self.widget_dict[self.DONE_LABEL_KEY].configure(state='normal')
 
     def list_to_string(self,l):
         
@@ -148,6 +156,7 @@ class parser:
         dir_name = tkFileDialog.askdirectory(parent=root, initialdir="/", title=window_title)
         self.path_dict[dict_key] = dir_name
         entry_content.set(dir_name)
+        self.widget_dict[self.DONE_LABEL_KEY].configure(state='disabled')
     
     def select_file_path(self, window_title, dict_key, entry_content):
         root = Tkinter.Tk()
@@ -155,6 +164,7 @@ class parser:
         file_name = tkFileDialog.askopenfilename(parent=root, initialdir="/", title=window_title)
         self.path_dict[dict_key] = file_name
         entry_content.set(file_name)
+        self.widget_dict[self.DONE_LABEL_KEY].configure(state='disabled')
     
     def unzip(self, source):
         td = tempfile.mkdtemp()
