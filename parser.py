@@ -89,18 +89,6 @@ class parser:
                                                                                                          plain_checked))
         self.buttonStart.grid(row=5, column=0, columnspan=2)
 
-        self.scrollbar = Tkinter.Scrollbar(frame)
-        self.scrollbar.pack(side=Tkinter.RIGHT, fill=Tkinter.Y)
-        self.scrollbar.grid(row=6, column=0, columnspan=2)
-
-        self.logbox = Tkinter.Listbox(frame, yscrollcommand=self.scrollbar.set)
-        self.logbox.grid(row=6, column=0, columnspan=2)
-        
-        self.logbox.config(yscrollcommand=self.scrollbar.set)
-        self.scrollbar.config(command=self.logbox.yview)
-        
-        self.gui_logger("Program Started")
-    
     def csv_checkbox_state(self,variable,child_key,child_key_var):
         if variable.get() == 0:
             self.widget_dict[child_key].configure(state='disabled')
