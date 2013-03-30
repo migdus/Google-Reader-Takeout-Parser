@@ -131,7 +131,7 @@ class parser:
                 if(csv_checked.get() == 1):
                         flag_header_written = False
                         with open(os.path.join(dest_path.get(),self.dest_filename+'.csv'),'wb') as csvfile:
-                            csvwriter=csv.writer(csvfile,delimiter=',',quotechar='"',quoting=csv.QUOTE_MINIMAL)
+                            csvwriter=csv.writer(csvfile,delimiter=',',quotechar='"',quoting=csv.QUOTE_ALL)
                             
                             parsedxml = listparser.parse(f)
                             
@@ -142,16 +142,31 @@ class parser:
                                 flag_header_written = True
 
                             for e in parsedxml.feeds:
-                                outs=''
+                                row = []
                                 for k in keys:
-                                    outs+=str(e[k])
-                                csvwriter.writerow(outs)
+                                    if type(e[k]) is list:
+                                        row.append(self.list_to_string(e[k]))
+                                    else:
+                                        row.append(e[k])
+                                csvwriter.writerow(row)
                     
                 if plain_checked.get() == 1:
                     self.gui_logger("Plain Text Option selected")
                     self.gui_logger(e)
                 
-            
+    def list_to_string(self,l):
+        
+        stringlist = ""
+        
+        if len(l)>0:
+            tempstr=''
+            for ele in l:
+                if type(ele) is list:
+                    ele=self.list_to_string(ele)
+                tempstr+=ele+','
+                stringlist=tempstr[:-1]
+        return stringlist
+
  
     def select_dir_path(self, window_title, dict_key, entry_content):
         root = Tkinter.Tk()
