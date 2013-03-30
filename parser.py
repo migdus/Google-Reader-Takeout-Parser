@@ -31,7 +31,6 @@ class parser:
         self.widget_dict = {}
         self.MAIN_CSV_WIDGET_KEY = 'main_csv'
         self.CSV_FIRST_LINE_HEADER_KEY = 'header_csv'
-        self.DONE_LABEL_KEY = 'done_label'
     
         master.title('Quick n\' Dirty Google Reader Takeout Parser')
         frame = Tkinter.Frame(master)
@@ -69,11 +68,6 @@ class parser:
         self.checkbox_csv_first_line_header.configure(state='disabled')
         self.checkbox_csv_first_line_header.grid(row=4, column=0)
         self.widget_dict[self.CSV_FIRST_LINE_HEADER_KEY] = self.checkbox_csv_first_line_header
-        
-        self.ok_label = Tkinter.Label(frame, text="Done!")
-        self.ok_label.configure(state='disabled')
-        self.ok_label.grid(row=4, column=1)
-        self.widget_dict[self.DONE_LABEL_KEY] = self.ok_label
     
         csv_checked = Tkinter.IntVar()
         self.checkbox_csv = Tkinter.Checkbutton(frame, text="CSV", variable=csv_checked,
@@ -94,6 +88,20 @@ class parser:
                                                                                                          csv_first_line_header, 
                                                                                                          plain_checked))
         self.start_button.grid(row=5, column=0, columnspan=2)
+
+        self.scrollbar = Tkinter.Scrollbar(frame)
+        self.scrollbar.pack(side=Tkinter.RIGHT, fill=Tkinter.Y)
+        self.scrollbar.grid(row=6, column=0, columnspan=2)
+        
+        self.logbox = Tkinter.Listbox(frame, yscrollcommand=self.scrollbar.set)
+        self.logbox.grid(row=6, column=0, columnspan=2)
+        self.logbox.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.config(command=self.logbox.yview)
+
+
+    def gui_logger(self, message):
+        self.logbox.insert(Tkinter.END, datetime.now().isoformat()) 
+        self.logbox.insert(Tkinter.END, message)
 
     def csv_checkbox_state(self,variable,child_key,child_key_var):
         if variable.get() == 0:
@@ -134,7 +142,7 @@ class parser:
                                         row.append(e[k])
                                 csv_writer.writerow(row)
                                 
-        self.widget_dict[self.DONE_LABEL_KEY].configure(state='normal')
+        self.gui_logger("Done!")
 
     def list_to_string(self,l):
         
@@ -156,7 +164,6 @@ class parser:
         dir_name = tkFileDialog.askdirectory(parent=root, initialdir="/", title=window_title)
         self.path_dict[dict_key] = dir_name
         entry_content.set(dir_name)
-        self.widget_dict[self.DONE_LABEL_KEY].configure(state='disabled')
     
     def select_file_path(self, window_title, dict_key, entry_content):
         root = Tkinter.Tk()
@@ -164,7 +171,6 @@ class parser:
         file_name = tkFileDialog.askopenfilename(parent=root, initialdir="/", title=window_title)
         self.path_dict[dict_key] = file_name
         entry_content.set(file_name)
-        self.widget_dict[self.DONE_LABEL_KEY].configure(state='disabled')
     
     def unzip(self, source):
         td = tempfile.mkdtemp()
