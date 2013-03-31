@@ -6,6 +6,7 @@ Created on Mar 26, 2013
 import zipfile, tempfile, Tkinter, tkFileDialog, xml.etree.ElementTree as xml, os, listparser,csv
 
 from datetime import datetime
+from zipfile import BadZipfile
 
 class csv_writer:
     def __init__(self, path):
@@ -34,7 +35,7 @@ class parser:
     
         master.title('Quick n\' Dirty Google Reader Takeout Parser')
         frame = Tkinter.Frame(master)
-        frame.grid()
+        frame.grid(padx=(10,10),pady=(10,10))
         
         find_zip_entry_content = Tkinter.StringVar()
         select_file_text = 'Select a zip file'
@@ -83,10 +84,11 @@ class parser:
         self.checkbox_plain.grid(row=3, column=1)
 
         
-        self.start_button = Tkinter.Button(frame, text='Start Parsing', command=lambda:self.start_parsing(find_dir_entry_content,
-                                                                                                         csv_checked,
-                                                                                                         csv_first_line_header, 
-                                                                                                         plain_checked))
+        self.start_button = Tkinter.Button(frame, text='Start Parsing', 
+                                           command=lambda:self.start_parsing(find_dir_entry_content,
+                                                                             csv_checked,
+                                                                             csv_first_line_header, 
+                                                                             plain_checked))
         self.start_button.grid(row=5, column=0, columnspan=2)
 
         self.scrollbar = Tkinter.Scrollbar(frame)
@@ -94,15 +96,13 @@ class parser:
         self.scrollbar.grid(row=6, column=0, columnspan=2)
         
         self.logbox = Tkinter.Listbox(frame, yscrollcommand=self.scrollbar.set)
-        self.logbox.grid(row=6, column=0, columnspan=2)
+        self.logbox.grid(row=6, column=0, columnspan=2,sticky=Tkinter.E+Tkinter.W)
         self.logbox.config(yscrollcommand=self.scrollbar.set)
         self.scrollbar.config(command=self.logbox.yview)
 
-
     def gui_logger(self, message):
-        self.logbox.insert(Tkinter.END, datetime.now().isoformat()) 
-        self.logbox.insert(Tkinter.END, message)
-
+        self.logbox.insert(Tkinter.END, datetime.now().isoformat().split('.')[0]+" "+message) 
+        
     def csv_checkbox_state(self,variable,child_key,child_key_var):
         if variable.get() == 0:
             self.widget_dict[child_key].configure(state='disabled')
@@ -112,37 +112,52 @@ class parser:
             child_key_var.set(1)
     
     def start_parsing(self, dest_path,csv_checked, csv_first_line_header,plain_checked):
-        
-        td = self.unzip(self.path_dict[self.FIND_ZIP_DICT_KEY])
-        
-        files = self.search_path_files(td)
-        
-        for f in files:
-            fileName, fileExtension = os.path.splitext(f)
-            if fileExtension == '.xml':
-                if(csv_checked.get() == 1):
-                        flag_header_written = False
-                        with open(os.path.join(dest_path.get(),self.dest_filename+'.csv'),'wb') as csvfile:
-                            csv_writer=csv.writer(csvfile,delimiter=',',quotechar='"',quoting=csv.QUOTE_ALL)
-                            
-                            parsedxml = listparser.parse(f)
-                            
-                            keys=parsedxml.feeds[0].keys()
-                            
-                            if(csv_first_line_header.get() == 1 and not flag_header_written):
-                                csv_writer.writerow(keys)
-                                flag_header_written = True
-
-                            for e in parsedxml.feeds:
-                                row = []
-                                for k in keys:
-                                    if type(e[k]) is list:
-                                        row.append(self.list_to_string(e[k]))
-                                    else:
-                                        row.append(e[k])
-                                csv_writer.writerow(row)
+        try:
+            
+            td = self.unzip(self.path_dict[self.FIND_ZIP_DICT_KEY])
+            
+            files = self.search_path_files(td)
+            
+            flag_subscriptions_xml_found = False
+            destination_filename = self.dest_filename+'_subscriptions.csv'
+            
+            for f in files:
+                fileName, fileExtension = os.path.splitext(f)
+                if fileName.find('subscriptions')>=0 and fileExtension == '.xml':
+                    flag_subscriptions_xml_found = True
+                    
+                    if(csv_checked.get() == 1):
+                            flag_header_written = False
+                            with open(os.path.join(dest_path.get(),destination_filename),'wb') as csvfile:
+                                csv_writer=csv.writer(csvfile,delimiter=',',quotechar='"',quoting=csv.QUOTE_ALL)
                                 
-        self.gui_logger("Done!")
+                                parsedxml = listparser.parse(f)
+                                
+                                keys=parsedxml.feeds[0].keys()
+                                
+                                if(csv_first_line_header.get() == 1 and not flag_header_written):
+                                    csv_writer.writerow(keys)
+                                    flag_header_written = True
+    
+                                for e in parsedxml.feeds:
+                                    row = []
+                                    for k in keys:
+                                        if type(e[k]) is list:
+                                            row.append(self.list_to_string(e[k]))
+                                        else:
+                                            row.append(e[k])
+                                    csv_writer.writerow(row)
+                            
+                            self.gui_logger("File written: "+destination_filename)
+                    
+            
+            if flag_subscriptions_xml_found is False:
+                self.gui_logger("Error: subscriptions.xml not found in zip file.")
+                                    
+            self.gui_logger("Done!")
+        
+        except BadZipfile:
+            self.gui_logger("Error: File is not a zip file.")
 
     def list_to_string(self,l):
         
@@ -213,5 +228,6 @@ class parser:
 
 root = Tkinter.Tk()
 app = parser(root)
+root.resizable(0,0)
 root.mainloop()
 
